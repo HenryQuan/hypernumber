@@ -24,8 +24,9 @@ def multiple(v):
 def compact(v):
     if v is None:
         return "n/a"
-    v = abs(float(v))
-    sign = "-" if float(v) < 0 else ""
+    value = float(v)
+    sign = "-" if value < 0 else ""
+    v = abs(value)
     for unit, size in (("B", 1e9), ("M", 1e6), ("K", 1e3)):
         if v >= size:
             return f"{sign}{v / size:.3f}{unit}"
@@ -63,7 +64,7 @@ def equity_chart(points):
     for year in years:
         values = [monthly.get((year, month)) for month in range(1, 13)]
         cells = "".join(
-            f"{compact(v):>9}" if v is not None else f"{'-':>9}" for v in values
+            f"{compact(v):>9}" if v is not None else f"{'x':>9}" for v in values
         )
         lines.append(f"{year:<10}" + cells)
     return "\n".join(lines)
@@ -269,7 +270,7 @@ def print_report(address, s):
             vals = [growth.get(f"{year}-{m:02d}") for m in range(1, 13)]
             total_growth = combine(vals)
             cells = "".join(
-                f"{v:>8.2f}%" if v is not None else f"{'-':>9}" for v in vals
+                f"{v:>8.2f}%" if v is not None else f"{'x':>9}" for v in vals
             )
             print(f"{year:<10}" + cells + f"{total_growth:>9.2f}%")
         total_growth = combine(growth.values())
