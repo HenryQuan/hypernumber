@@ -1,0 +1,14 @@
+[project]
+name = "hyperliquid-tracker"
+version = "0.1.0"
+description = "A dependency-free Hyperliquid trading statistics tracker"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+hyperliquid-tracker = "hyperliquid_tracker.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
