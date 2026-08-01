@@ -4,6 +4,7 @@ import argparse
 import json
 import re
 import sys
+from bisect import bisect_left
 from datetime import UTC, datetime
 
 from .analytics import calculate, display_time
@@ -70,14 +71,15 @@ def equity_chart(points):
 
 def draw_equity_chart(points):
     """10-row terminal line chart: peak at row 0, bottom at row 9, oldest left.
-    Points are stretched across the full width so the line always fills it."""
+    The x-axis is proportional to real time, so each column's date label
+    exactly matches the data drawn at that position."""
     if not points:
         return "no equity data yet"
     width = 110
-    values = [v for _, v in points]
-    if len(values) > width:
-        idx = sorted({round(i * (len(values) - 1) / (width - 1)) for i in range(width)})
-        values = [values[i] for i in idx]
+    items = sorted(points)
+    ts_list = [t for t, _ in items]
+    values = [v for _, v in items]
+    t0, t1 = ts_list[0], ts_list[-1]
     lo, hi = min(values), max(values)
     rows = 10
 
@@ -86,28 +88,43 @@ def draw_equity_chart(points):
             return rows // 2
         return rows - 1 - round((v - lo) / (hi - lo) * (rows - 1))
 
-    n = len(values)
-    cols = [round(i * (width - 1) / (n - 1)) for i in range(n)] if n > 1 else [0]
-    rws = [row_of(v) for v in values]
+    def value_at(ts):
+        i = bisect_left(ts_list, ts)
+        if i == 0:
+            return values[0]
+        if i >= len(ts_list):
+            return values[-1]
+        before = ts - ts_list[i - 1]
+        after = ts_list[i] - ts
+        return values[i - 1] if before <= after else values[i]
+
     grid = [[" "] * width for _ in range(rows)]
-    for i in range(n - 1):
-        c1, c2, r1, r2 = cols[i], cols[i + 1], rws[i], rws[i + 1]
-        # stretch the line horizontally between consecutive points
-        for c in range(c1, c2):
-            if grid[r1][c] == " ":
-                grid[r1][c] = "-"
-        # then connect vertically to the next row
-        for k in range(min(r1, r2) + 1, max(r1, r2)):
-            if grid[k][c2] == " ":
-                grid[k][c2] = "|"
-    for c, r in zip(cols, rws):
+    prev_row = None
+    for c in range(width):
+        ts = t0 + (t1 - t0) * (c / (width - 1))
+        r = row_of(value_at(ts))
         grid[r][c] = "-"
+        if prev_row is not None and prev_row != r:
+            for k in range(min(prev_row, r) + 1, max(prev_row, r)):
+                grid[k][c] = "|"
+        prev_row = r
+
+    labels = [" "] * width
+    step = max(1, width // 7)
+    for c in range(0, width, step):
+        ts = t0 + (t1 - t0) * (c / (width - 1))
+        label = datetime.fromtimestamp(ts / 1000, UTC).strftime("%b %Y")
+        start = max(0, c - len(label) // 2)
+        for j, ch in enumerate(label):
+            if start + j < width:
+                labels[start + j] = ch
     lines = []
     for r in range(rows):
         line = "".join(grid[r]).rstrip()
         if r == 0:
             line += f"   max {compact(hi)}"
         lines.append(line if line else " ")
+    lines.append("".join(labels).rstrip())
     return "\n".join(lines)
 
 
