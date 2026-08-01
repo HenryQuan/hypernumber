@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import time
+from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -13,13 +14,23 @@ class HyperliquidError(RuntimeError):
 class HyperliquidClient:
     """Small client for the public Hyperliquid info API (no API key required)."""
 
-    def __init__(self, base_url: str = "https://api.hyperliquid.xyz", timeout: int = 30):
+    def __init__(
+        self, base_url: str = "https://api.hyperliquid.xyz", timeout: int = 30
+    ):
         self.url = base_url.rstrip("/") + "/info"
         self.timeout = timeout
+        self._last_request = 0.0
 
-    def info(self, payload: dict) -> object:
+    def info(self, payload: dict) -> Any:
         body = json.dumps(payload).encode()
-        request = Request(self.url, body, {"Content-Type": "application/json"}, method="POST")
+        request = Request(
+            self.url, body, {"Content-Type": "application/json"}, method="POST"
+        )
+        # Avoid hammering the public API: leave at least 200ms between requests.
+        wait = 0.2 - (time.monotonic() - self._last_request)
+        if wait > 0:
+            time.sleep(wait)
+        self._last_request = time.monotonic()
         try:
             with urlopen(request, timeout=self.timeout) as response:
                 return json.loads(response.read())
@@ -27,9 +38,11 @@ class HyperliquidClient:
             # Hyperliquid's useful validation message is in the response body.
             try:
                 detail = exc.read().decode("utf-8", "replace")
-            except Exception:
+            except (OSError, UnicodeDecodeError):
                 detail = str(exc.reason)
-            raise HyperliquidError(f"Hyperliquid API request failed: {exc.reason} ({detail})") from exc
+            raise HyperliquidError(
+                f"Hyperliquid API request failed: {exc.reason} ({detail})"
+            ) from exc
         except (URLError, TimeoutError) as exc:
             detail = getattr(exc, "reason", exc)
             raise HyperliquidError(f"Hyperliquid API request failed: {detail}") from exc
@@ -52,7 +65,12 @@ class HyperliquidClient:
                 raise HyperliquidError("Unexpected fills response")
             fresh = []
             for fill in page:
-                key = (fill.get("hash"), fill.get("tid"), fill.get("time"), fill.get("oid"))
+                key = (
+                    fill.get("hash"),
+                    fill.get("tid"),
+                    fill.get("time"),
+                    fill.get("oid"),
+                )
                 if key not in seen:
                     seen.add(key)
                     fresh.append(fill)
@@ -63,7 +81,6 @@ class HyperliquidClient:
             if cursor is not None and newest <= cursor:
                 break
             cursor = newest + 1
-            time.sleep(0.05)
         return sorted(result, key=lambda f: int(f.get("time", 0)))
 
     def clearinghouse_state(self, address: str) -> dict:
@@ -77,13 +94,20 @@ class HyperliquidClient:
     def funding(self, address: str, start_ms: int | None = None) -> list[dict]:
         result, cursor, seen = [], (0 if start_ms is None else start_ms), set()
         while True:
-            value = self.info({"type": "userFunding", "user": address, "startTime": cursor})
-            if not isinstance(value, list): break
+            value = self.info(
+                {"type": "userFunding", "user": address, "startTime": cursor}
+            )
+            if not isinstance(value, list):
+                break
             for item in value:
                 key = (item.get("time"), item.get("hash"), str(item.get("delta")))
-                if key not in seen: seen.add(key); result.append(item)
-            if len(value) < 2000 or not value: break
+                if key not in seen:
+                    seen.add(key)
+                    result.append(item)
+            if len(value) < 2000 or not value:
+                break
             newest = max(int(x.get("time", 0)) for x in value)
-            if newest <= cursor: break
+            if newest <= cursor:
+                break
             cursor = newest + 1
         return sorted(result, key=lambda x: int(x.get("time", 0)))

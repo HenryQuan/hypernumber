@@ -12,3 +12,9 @@ hyperliquid-tracker = "hyperliquid_tracker.cli:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.1",
+    "ty>=0.0.65",
+]
