@@ -38,7 +38,7 @@ def _holding_hours(fills: list[dict]) -> float | None:
             else -1
         )
         book = lots[coin]
-        while qty and book and book[0][1] * sign < 0:
+        while qty and book and book[0][0] * sign < 0:
             old_sign, old_qty, opened = book[0]
             matched = min(qty, old_qty)
             durations.append((matched, max(0, int(fill.get("time", opened)) - opened)))
