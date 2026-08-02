@@ -270,13 +270,15 @@ Widget _lineChart(List<List<num>> points,
               showTitles: true,
               reservedSize: 26,
               interval: (maxX - minX) / 6,
+              // Avoid a duplicate tick on top of the last data point.
+              maxIncluded: false,
               getTitlesWidget: (value, meta) {
                 final dt = DateTime.fromMillisecondsSinceEpoch(
                   value.toInt(),
                   isUtc: true,
                 );
                 return Text(
-                  '${_months[dt.month - 1]} ${dt.year}',
+                  '${dt.month}/${dt.year % 100}',
                   style: const TextStyle(fontSize: 10),
                 );
               },
@@ -342,10 +344,11 @@ Widget _calendarTable({
       ]),
   ];
 
+  // Fill the full width when it fits; on narrow viewports use a readable
+  // fixed column width and let the user scroll horizontally.
   return LayoutBuilder(
     builder: (context, constraints) {
-      final colWidth =
-          math.max(constraints.maxWidth / columnCount, 46.0);
+      final colWidth = math.max(constraints.maxWidth / columnCount, 64.0);
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Table(
