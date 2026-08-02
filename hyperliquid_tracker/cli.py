@@ -70,7 +70,7 @@ def equity_chart(points):
     return "\n".join(lines)
 
 
-def draw_equity_chart(points):
+def draw_movement_chart(points):
     """10-row terminal line chart: peak at row 0, bottom at row 9, oldest left.
     The x-axis is proportional to real time, so each column's date label
     exactly matches the data drawn at that position."""
@@ -147,8 +147,8 @@ def print_report(address, s):
         (
             "Trades",
             total,
-            "Profitability",
-            f"{s['profit_trades']} ({wp:.2f}%) / {s['loss_trades']} ({lp:.2f}%)",
+            "Win Rate",
+            f"Wins {s['profit_trades']} ({wp:.2f}%) / Losses {s['loss_trades']} ({lp:.2f}%)",
         ),
         (
             "Average Win",
@@ -161,6 +161,12 @@ def print_report(address, s):
             f"-{fmt(s['fees_usdc'])} USDC",
             "Funding",
             f"{fmt(s['funding_usdc'])} USDC",
+        ),
+        (
+            "Deposits",
+            f"{fmt(s['deposits_usdc'])} USDC",
+            "Withdrawals",
+            f"{fmt(s['withdrawals_usdc'])} USDC",
         ),
         (
             "Net P&L",
@@ -215,6 +221,26 @@ def print_report(address, s):
             fmt(s["sharpe_ratio"]),
         ),
         (
+            "Sortino",
+            fmt(s["sortino_ratio"]),
+            "Recovery Factor",
+            fmt(s["recovery_factor"]),
+        ),
+        (
+            "Total Return",
+            f"{fmt(s['total_return_percent'])}%",
+            "Peak Return",
+            f"{fmt(s['peak_return_percent'])}%",
+        ),
+        (
+            {"D": "Daily Avg", "W": "Weekly Avg", "M": "Monthly Avg"}.get(
+                s.get("period_freq"), "Period Avg"
+            ),
+            f"{fmt(s['period_avg_percent'])}%",
+            "UPI",
+            fmt(s["upi"]),
+        ),
+        (
             "Expectancy",
             f"{fmt(s['expected_payoff_usdc'])} USDC",
             "Trading Activity",
@@ -240,10 +266,10 @@ def print_report(address, s):
         else:
             print(f"{a:<22}: {b}")
     print(f"\nEquity History (USDC)\n{equity_chart(s.get('equity_history', []))}")
-    print(f"\nEquity Movement\n{draw_equity_chart(s.get('equity_history', []))}")
+    print(f"\nEquity Movement\n{draw_movement_chart(s.get('equity_history', []))}")
     growth = s.get("monthly_growth", {})
     if growth:
-        print("\nAddress Growth")
+        print("\nGrowth History")
         print(
             f"{'Year':<10}"
             + "".join(
@@ -279,6 +305,7 @@ def print_report(address, s):
             + "".join(f"{'':>9}" for _ in range(12))
             + f"{(compact(total_growth) + '%'):>10}"
         )
+        print(f"\nGrowth Movement\n{draw_movement_chart(s.get('pnl_history', []))}")
 
 
 def main(argv=None):
@@ -305,13 +332,18 @@ def main(argv=None):
             p.error("--since must be YYYY-MM-DD")
     try:
         c = HyperliquidClient(a.api)
-        fills = c.fills(a.address, start)
+
+        def progress(kind: str, page: int) -> None:
+            print(f"  fetching {kind} page {page}", file=sys.stderr)
+
+        fills = c.fills(a.address, start, on_page=progress)
         stats = calculate(
             fills,
             c.clearinghouse_state(a.address),
             c.portfolio(a.address),
-            c.funding(a.address, start),
+            c.funding(a.address, start, on_page=progress),
         )
+        print("Presenting results...", file=sys.stderr)
     except HyperliquidError as exc:
         print(str(exc), file=sys.stderr)
         return 1
