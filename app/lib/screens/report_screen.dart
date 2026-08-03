@@ -163,7 +163,7 @@ List<(String, String)> _reportCards(Map<String, dynamic> s) {
     ('Deposits', usdc(s['deposits_usdc']), 'Withdrawals',
         usdc(s['withdrawals_usdc'])),
     ('Net P&L', usdc(s['net_profit_usdc']), 'Portfolio PNL',
-        '${fmtValue(s['portfolio_pnl_usdc'])} USDC (${compact(s['portfolio_pnl_usdc'])})'),
+        usdc(s['portfolio_pnl_usdc'])),
     ('Volume', usdc(s['volume_usdc']), 'Max Drawdown',
         pct(s['max_drawdown_percent'])),
     ('Total Equity', usdc(s['total_equity_usdc']), 'Trading Equity',
