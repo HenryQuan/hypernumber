@@ -150,18 +150,26 @@ class HyperliquidClient {
   }
 
   /// userFunding caps responses at 500 entries, so advance the cursor as
-  /// long as new data keeps arriving (no page-size assumption).
-  Future<List<Map<String, dynamic>>> funding(
+  /// long as new data keeps arriving (no page-size assumption). Pages are
+  /// capped at [maxPages] to stay within API rate limits; the returned bool
+  /// is true when the cap was hit (history is incomplete).
+  Future<(List<Map<String, dynamic>>, bool)> funding(
     String address, {
     int? startMs,
     PageCallback? onPage,
+    int maxPages = 10,
   }) async {
     final result = <Map<String, dynamic>>[];
     var cursor = startMs ?? 0;
     final seen = <String>{};
     var pageNo = 0;
+    var capped = false;
     while (true) {
       pageNo += 1;
+      if (pageNo > maxPages) {
+        capped = true;
+        break;
+      }
       onPage?.call('funding', pageNo);
       final value = await info({
         'type': 'userFunding',
@@ -187,6 +195,6 @@ class HyperliquidClient {
       cursor = newest + 1;
     }
     result.sort((a, b) => number(a['time']).compareTo(number(b['time'])));
-    return result;
+    return (result, capped);
   }
 }

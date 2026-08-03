@@ -43,4 +43,41 @@ void main() {
       expect(find.text('Hyperliquid Numbers'), findsOneWidget);
     }
   });
+
+  testWidgets('shows a warning when funding was capped', (tester) async {
+    final fixture = jsonDecode(
+      File('test/fixtures/report.json').readAsStringSync(),
+    ) as Map<String, dynamic>;
+    final inputs = fixture['inputs'] as Map<String, dynamic>;
+    final fills = [
+      for (final f in inputs['fills'] as List)
+        (f as Map).cast<String, dynamic>(),
+    ];
+    final funding = [
+      for (final f in inputs['funding'] as List)
+        (f as Map).cast<String, dynamic>(),
+    ];
+    final state = (inputs['state'] as Map).cast<String, dynamic>();
+    final portfolio = inputs['portfolio'] as List;
+    final stats =
+        calculate(fills, state: state, portfolio: portfolio, funding: funding);
+    final data = <String, dynamic>{
+      'address': '0xabc',
+      'funding_capped': true,
+      ...stats,
+    };
+
+    tester.view.physicalSize = const Size(800, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(home: ReportScreen(address: '0xabc', data: data)),
+    );
+    await tester.pump();
+    expect(
+      find.textContaining('Funding history was capped'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }

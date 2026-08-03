@@ -34,6 +34,10 @@ class ReportScreen extends StatelessWidget {
             address,
             style: const TextStyle(fontFamily: 'monospace'),
           ),
+          if (data['funding_capped'] == true) ...[
+            const SizedBox(height: 12),
+            _CappedBanner(theme),
+          ],
           const SizedBox(height: 16),
           _MetricGrid(cards),
           const _SectionTitle('Equity History (USDC)'),
@@ -61,6 +65,40 @@ class _SectionTitle extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 24, bottom: 12),
       child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+    );
+  }
+}
+
+/// Warns that the funding history was capped and the funding total may be
+/// incomplete.
+class _CappedBanner extends StatelessWidget {
+  const _CappedBanner(this.theme);
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.warning_amber_rounded,
+              color: theme.colorScheme.onErrorContainer),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Funding history was capped at 10 pages (5,000 entries) - '
+              'the funding total may not reflect the full amount.',
+              style: TextStyle(color: theme.colorScheme.onErrorContainer),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

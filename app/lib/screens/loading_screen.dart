@@ -42,11 +42,16 @@ class _LoadingScreenState extends State<LoadingScreen> {
       final fills = await _client.fills(widget.address, onPage: _onPage);
       final state = await _client.clearinghouseState(widget.address);
       final portfolio = await _client.portfolio(widget.address);
-      final funding = await _client.funding(widget.address, onPage: _onPage);
+      final (funding, fundingCapped) =
+          await _client.funding(widget.address, onPage: _onPage);
       final stats = calculate(
           fills, state: state, portfolio: portfolio, funding: funding);
       if (!mounted) return;
-      final data = <String, dynamic>{'address': widget.address, ...stats};
+      final data = <String, dynamic>{
+        'address': widget.address,
+        'funding_capped': fundingCapped,
+        ...stats,
+      };
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => ReportScreen(address: widget.address, data: data),
