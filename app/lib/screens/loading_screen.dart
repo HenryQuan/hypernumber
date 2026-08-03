@@ -46,7 +46,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => widget.asJson
-              ? JsonScreen(address: widget.address, data: data)
+              ? JsonScreen(data: data)
               : ReportScreen(address: widget.address, data: data),
         ),
       );

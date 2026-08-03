@@ -1,12 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hypernumber/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('renders the address input', (tester) async {
+    SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const HypernumberApp());
     expect(find.text('Hyperliquid Numbers'), findsOneWidget);
     expect(find.byType(TextField), findsOneWidget);
+    expect(find.text('View'), findsOneWidget);
+  });
+
+  testWidgets('shows saved addresses', (tester) async {
+    const addr = '0x1234567890abcdef1234567890abcdef12345678';
+    SharedPreferences.setMockInitialValues({'address_history': [addr]});
+    await tester.pumpWidget(const HypernumberApp());
+    await tester.pump();
+    expect(find.widgetWithText(ActionChip, addr), findsOneWidget);
+  });
+
+  testWidgets('saves a viewed address', (tester) async {
+    const addr = '0x1234567890abcdef1234567890abcdef12345678';
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const HypernumberApp());
+    await tester.enterText(find.byType(TextField), addr);
+    await tester.tap(find.text('View'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.tap(find.byType(BackButton));
+    await tester.pump();
+    expect(find.widgetWithText(ActionChip, addr), findsOneWidget);
   });
 
   group('UrlRequest web routing', () {
