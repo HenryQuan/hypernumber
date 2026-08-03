@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'loading_screen.dart';
@@ -20,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   static final _addressRe = RegExp(r'^0x[0-9a-fA-F]{40}$');
 
   late final TextEditingController _controller;
-  late bool _json;
+  late final FocusNode _focusNode;
   String? _error;
   List<String> _history = [];
 
@@ -28,13 +29,20 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.initialAddress ?? '');
-    _json = widget.initialJson;
+    _focusNode = FocusNode()..addListener(() => setState(() {}));
     _loadHistory();
+    if (widget.initialAddress != null) {
+      // Opened from a URL (e.g. /#/<address>): do the work directly.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _run();
+      });
+    }
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -61,6 +69,17 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _paste() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text?.trim() ?? '';
+    if (!mounted || text.isEmpty) return;
+    // Just paste into the field; the user presses View when ready.
+    setState(() {
+      _controller.text = text;
+      _error = null;
+    });
+  }
+
   void _run([String? address]) {
     final addr = (address ?? _controller.text).trim();
     if (!_addressRe.hasMatch(addr)) {
@@ -73,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _remember(addr);
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => LoadingScreen(address: addr, asJson: _json),
+        builder: (_) => LoadingScreen(address: addr),
       ),
     );
   }
@@ -109,25 +128,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 24),
                 TextField(
                   controller: _controller,
+                  focusNode: _focusNode,
                   decoration: InputDecoration(
                     labelText: 'Wallet address',
                     hintText: '0x0000000000000000000000000000000000000000',
                     border: const OutlineInputBorder(),
                     errorText: _error,
+                    suffixIcon: _focusNode.hasFocus
+                        ? IconButton(
+                            tooltip: 'Paste',
+                            icon: const Icon(Icons.content_paste),
+                            onPressed: _paste,
+                          )
+                        : null,
                   ),
                   style: const TextStyle(fontFamily: 'monospace'),
                   onSubmitted: (_) => _run(),
                 ),
-                if (kIsWeb) ...[
-                  const SizedBox(height: 12),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('JSON output'),
-                    subtitle: const Text('Raw report JSON, no UI'),
-                    value: _json,
-                    onChanged: (v) => setState(() => _json = v),
-                  ),
-                ],
                 const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: _run,
@@ -169,8 +186,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (kIsWeb) ...[
                   const SizedBox(height: 20),
                   Text(
-                    'Web JSON via URL: add /#/<address> or /#/<address>/json '
-                    '(or ?address=<address>&json=1) to this page URL.',
+                    'Open any address directly: /<address> or /#/<address> '
+                    'in this page URL.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: theme.colorScheme.onSurfaceVariant),

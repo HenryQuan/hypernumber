@@ -16,6 +16,15 @@ class HyperliquidError implements Exception {
   String toString() => message;
 }
 
+/// Thrown when [HyperliquidClient.cancel] was called (e.g. the user navigated
+/// back while the report was loading). Not an error: callers just stop.
+class HyperliquidCancelled implements Exception {
+  const HyperliquidCancelled();
+
+  @override
+  String toString() => 'cancelled';
+}
+
 /// Reports pagination progress from `fills`/`funding` (kind: "fills"|"funding").
 typedef PageCallback = void Function(String kind, int page);
 
@@ -32,8 +41,18 @@ class HyperliquidClient {
   final Duration _timeout;
   final Duration _delay;
   DateTime? _lastRequest;
+  bool _cancelled = false;
+
+  /// Abort any in-flight or queued requests ([info] then throws
+  /// [HyperliquidCancelled] and pagination loops stop).
+  void cancel() => _cancelled = true;
+
+  void _throwIfCancelled() {
+    if (_cancelled) throw const HyperliquidCancelled();
+  }
 
   Future<dynamic> info(Map<String, dynamic> payload) async {
+    _throwIfCancelled();
     // Avoid hammering the public API: leave at least [_delay] between
     // requests (large accounts paginate dozens of pages).
     final now = DateTime.now();
@@ -44,6 +63,7 @@ class HyperliquidClient {
       }
     }
     _lastRequest = DateTime.now();
+    _throwIfCancelled();
     try {
       final response = await http
           .post(
@@ -52,6 +72,7 @@ class HyperliquidClient {
             body: jsonEncode(payload),
           )
           .timeout(_timeout);
+      _throwIfCancelled();
       if (response.statusCode == 429) {
         throw HyperliquidError(
             'Hyperliquid rate limit reached - please wait a moment and try again');

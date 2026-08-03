@@ -2,22 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../analytics/analytics.dart' show calculate;
 import '../api/hyperliquid_client.dart';
-import 'json_screen.dart';
 import 'report_screen.dart';
 
 /// Fetches fills/state/portfolio/funding, runs the ported analytics, then
-/// pushes the report (or JSON view) with live pagination progress.
+/// shows the report with live pagination progress.
 class LoadingScreen extends StatefulWidget {
-  const LoadingScreen({super.key, required this.address, required this.asJson});
+  const LoadingScreen({super.key, required this.address});
 
   final String address;
-  final bool asJson;
 
   @override
   State<LoadingScreen> createState() => _LoadingScreenState();
 }
 
 class _LoadingScreenState extends State<LoadingScreen> {
+  final _client = HyperliquidClient();
   String _progress = '';
   String? _error;
 
@@ -27,29 +26,34 @@ class _LoadingScreenState extends State<LoadingScreen> {
     _run();
   }
 
+  @override
+  void dispose() {
+    // User navigated back: stop fetching pages.
+    _client.cancel();
+    super.dispose();
+  }
+
   Future<void> _run() async {
     setState(() {
       _error = null;
       _progress = '';
     });
     try {
-      final client = HyperliquidClient();
-      final fills = await client.fills(widget.address, onPage: _onPage);
-      final state = await client.clearinghouseState(widget.address);
-      final portfolio = await client.portfolio(widget.address);
-      final funding =
-          await client.funding(widget.address, onPage: _onPage);
-      final stats =
-          calculate(fills, state: state, portfolio: portfolio, funding: funding);
+      final fills = await _client.fills(widget.address, onPage: _onPage);
+      final state = await _client.clearinghouseState(widget.address);
+      final portfolio = await _client.portfolio(widget.address);
+      final funding = await _client.funding(widget.address, onPage: _onPage);
+      final stats = calculate(
+          fills, state: state, portfolio: portfolio, funding: funding);
       if (!mounted) return;
       final data = <String, dynamic>{'address': widget.address, ...stats};
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => widget.asJson
-              ? JsonScreen(data: data)
-              : ReportScreen(address: widget.address, data: data),
+          builder: (_) => ReportScreen(address: widget.address, data: data),
         ),
       );
+    } on HyperliquidCancelled {
+      // User navigated back; requests stopped, nothing to show.
     } on HyperliquidError catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message);
