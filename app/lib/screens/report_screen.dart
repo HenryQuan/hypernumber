@@ -10,6 +10,31 @@ const _months = [
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
+/// Tooltip explanations for jargon-y metric labels (simple labels have none).
+const _termTips = <String, String>{
+  'Max Drawdown': 'Largest peak-to-trough decline in account equity, as % of the peak.',
+  'Portfolio PNL': 'Cumulative realized P&L from the portfolio PnL history.',
+  'Funding': 'Perpetual funding payments: received (+) or paid (-) for holding positions.',
+  'Current Leverage': 'Leverage set on currently open orders and positions.',
+  'History Leverage': 'Largest exposure-to-equity ratio across all historical fills (capped at 100x).',
+  'Profit Factor': 'Gross profit / gross loss. Above 1 means the account made more than it lost.',
+  'Standard Deviation': 'Spread of per-trade P&L (population standard deviation).',
+  'Sharpe Ratio': 'Risk-adjusted return: average P&L / its standard deviation (annualized).',
+  'Sortino': 'Like Sharpe, but only penalizes losing periods (downside deviation).',
+  'Recovery Factor': 'Total return / max drawdown. How quickly the account recovers from its worst decline.',
+  'Total Return': 'Compounded (time-weighted) return across all periods.',
+  'Peak Return': 'Highest compounded return the account reached.',
+  'UPI': 'Ulcer Performance Index: average period return / Ulcer index (drawdown pain).',
+  'Expectancy': 'Average expected P&L per trade (total P&L / trades).',
+  'Trading Activity': '% of days with at least one fill since the first trade.',
+  'Maximum Wins': 'Longest consecutive winning-trade streak.',
+  'Maximum Losses': 'Longest consecutive losing-trade streak.',
+  'Avg. Trade Length': 'Average time a position is held, FIFO-matched per coin.',
+  'Daily Avg': 'Average return per day (period frequency chosen from data density).',
+  'Weekly Avg': 'Average return per week (period frequency chosen from data density).',
+  'Monthly Avg': 'Average return per month (period frequency chosen from data density).',
+};
+
 class ReportScreen extends StatelessWidget {
   const ReportScreen({super.key, required this.address, required this.data});
 
@@ -104,14 +129,20 @@ class _CappedBanner extends StatelessWidget {
 }
 
 class _Metric extends StatelessWidget {
-  const _Metric({required this.label, required this.value});
+  const _Metric({required this.label, required this.value, this.tip});
 
   final String label;
   final String value;
+  final String? tip;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final labelText = Text(
+      label,
+      style: theme.textTheme.labelSmall
+          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+    );
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -122,11 +153,10 @@ class _Metric extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: theme.textTheme.labelSmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-          ),
+          if (tip != null)
+            Tooltip(message: tip!, child: labelText)
+          else
+            labelText,
           const SizedBox(height: 4),
           SelectableText(value, style: theme.textTheme.bodyMedium),
         ],
@@ -158,7 +188,11 @@ class _MetricGrid extends StatelessWidget {
             for (final (label, value) in cards)
               SizedBox(
                 width: itemWidth,
-                child: _Metric(label: label, value: value),
+                child: _Metric(
+                  label: label,
+                  value: value,
+                  tip: _termTips[label],
+                ),
               ),
           ],
         );
