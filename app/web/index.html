@@ -18,28 +18,34 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Trading report for any public Hyperliquid wallet address.">
 
   <script>
-    // Deep links like /<address>: keep the address and put it in the hash
-    // (/#/<address>) so Flutter's hash routing sees it before it normalizes
-    // the URL. Runs before the app loads.
+    // Deep links like /<address> or /tracker/<address>: keep the address,
+    // preserve any path prefix, and move it into the hash (/#/<address>) so
+    // Flutter's hash routing sees it before it normalizes the URL.
     (function () {
       var m = location.pathname.match(/(^|\/)(0x[0-9a-fA-F]{40})\/?$/);
-      if (m) history.replaceState(null, '', '/#/' + m[2]);
+      if (m) {
+        history.replaceState(
+          null,
+          '',
+          location.pathname.replace(/(^|\/)(0x[0-9a-fA-F]{40})\/?$/, '$1#/$2')
+        );
+      }
     })();
   </script>
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="hypernumber">
+  <meta name="apple-mobile-web-app-title" content="Hyperliquid Numbers">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>hypernumber</title>
+  <title>Hyperliquid Numbers</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
