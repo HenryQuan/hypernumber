@@ -5,8 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../analytics/analytics.dart' show number;
 
-/// Mirrors hyperliquid_tracker/api.py: a small client for the public
-/// Hyperliquid info API (no API key required).
+/// Small client for the public Hyperliquid info API (no API key required).
 class HyperliquidError implements Exception {
   HyperliquidError(this.message);
 

@@ -4,10 +4,10 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hypernumber/analytics/analytics.dart';
 
-/// Parity test: the Dart port must reproduce the reference Python
-/// implementation's output exactly (see tool/gen_fixture.py).
+/// The analytics must reproduce the committed reference fixture
+/// (test/fixtures/report.json).
 void main() {
-  test('calculate() matches the Python reference output', () {
+  test('calculate() matches the reference fixture', () {
     final fixture = jsonDecode(
       File('test/fixtures/report.json').readAsStringSync(),
     ) as Map<String, dynamic>;

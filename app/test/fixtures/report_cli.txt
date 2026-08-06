@@ -1,0 +1,56 @@
+Hyperliquid trading report
+0xabc
+
+Trades                : 4                            Win Rate              : Wins 3 (75.00%) / Losses 1 (25.00%)
+Average Win           : 49.65 USDC                   Average Loss          : -50.20 USDC
+Fees                  : -2.65 USDC                   Funding               : 1.00 USDC
+Deposits              : 300.55 USDC                  Withdrawals           : 250.55 USDC
+Net P&L               : 99.75 USDC                   Portfolio PNL         : 99.65 USDC (99.65)
+Volume                : 50,000.00 USDC               Max Drawdown          : 19.23%
+Total Equity          : 1,149.65 USDC                Trading Equity        : 1,149.65 USDC
+Current Leverage      : 25.00x                       History Leverage      : 4.00x
+Longs Won             : (1/2) 50%                    Shorts Won            : (2/2) 100%
+Best Trade            : 98.80 USDC                   Worst Trade           : -50.20 USDC
+Avg. Trade Length     : 30.06 hours                  Profit Factor         : 2.97
+Standard Deviation    : 55.42 USDC                   Sharpe Ratio          : 7.07
+Sortino               : 360.19                       Recovery Factor       : 0.52
+Total Return          : 9.98%                        Peak Return           : 10.09%
+Weekly Avg            : 5.00%                        UPI                   : 51.22
+Expectancy            : 24.69 USDC                   Trading Activity      : 115.20%
+Trades per Week       : 4.03                         Latest Trade          : 38 days ago
+Maximum Wins          : 2 (99.55 USDC)               Maximum Losses        : 1 (-50.20 USDC)
+
+Equity History (USDC)
+Year            Jan      Feb      Mar      Apr      May      Jun      Jul      Aug      Sep      Oct      Nov      Dec
+2023              x        x        x        x        x        x        x        x        x        x   1.150K        x
+
+Equity Movement
+                                                       ----------------   max 1.300K
+                                       ----------------                |
+                                       |                               |
+                                       |                               |
+                                       |                               |
+                                       |                               |                              --------
+        ----------------               |                               ---------------                |
+        |               ---------------                                               ----------------
+        |
+--------
+Nov 2023   Nov 2023       Nov 2023       Nov 2023       Nov 2023       Nov 2023       Nov 2023       Nov 2023
+
+Growth History
+Year            Jan      Feb      Mar      Apr      May      Jun      Jul      Aug      Sep      Oct      Nov      Dec      Year
+2023              x        x        x        x        x        x        x        x        x        x    9.96%        x     9.96%
+Total                                                                                                                      9.96%
+
+Growth Movement
+        ---------------------------------------------------------------                               --------   max 100.90
+        |                                                              |                              |
+        |                                                              |                              |
+        |                                                              |                              |
+        |                                                              -------------------------------
+        |
+        |
+        |
+        |
+--------
+Nov 2023   Nov 2023       Nov 2023       Nov 2023       Nov 2023       Nov 2023       Nov 2023       Nov 2023

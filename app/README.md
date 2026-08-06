@@ -1,9 +1,8 @@
 # Hyperliquid Numbers
 
-100% Flutter (Dart) port of the `hyperliquid_tracker` Python/uv project. The
-Python implementation is reference-only: all analytics, API calls and
-formatting live in Dart, so the app runs on Android, iOS, web, Windows, macOS
-and Linux.
+100% Flutter (Dart) app that builds a trading report for any public
+Hyperliquid wallet address from the public Info API (no API key required).
+Runs on Android, iOS, web, Windows, macOS and Linux.
 
 ## Run
 
@@ -15,10 +14,23 @@ flutter run -d chrome  # web
 ```
 
 Enter any public Hyperliquid wallet address to build the trading report from
-the public Info API (no API key required). Same metrics as the CLI: realized
-trades, win/loss, gross and average P&L, profit factor, expected payoff,
-Sharpe, streaks, direction split, activity, holding time, latest trade,
-account value, equity/growth charts.
+the public Info API (no API key required). Metrics: realized trades, win/loss,
+gross and average P&L, profit factor, expected payoff, Sharpe, streaks,
+direction split, activity, holding time, latest trade, account value,
+equity/growth charts.
+
+## Local CLI
+
+A Dart CLI shares the app's client + analytics (ASCII charts included):
+
+```bash
+cd app
+dart run tool/report.dart 0xF297cd479123064997eEBbc675e41Eb13aE325E7
+# options: --since YYYY-MM-DD, --api URL, --json
+```
+
+`test/report_cli_test.dart` locks the CLI text output against the committed
+reference fixture.
 
 ## Open an address via URL (web)
 
@@ -36,20 +48,16 @@ Real paths need the host to serve `index.html` for all paths: the
 rewrite rule (e.g. Netlify `_redirects` / Vercel `vercel.json` sending
 `/*` to `/index.html`). Hash routes work on any host with zero config.
 
-## Parity with the Python reference
+## Analytics regression
 
-`test/analytics_test.dart` locks the Dart port 1:1 against the Python
-implementation's exact output (54 result keys, nested histories and growth
-maps). Regenerate the fixture with:
-
-```bash
-cd ..
-uv run python tool/gen_fixture.py
-```
+`test/analytics_test.dart` checks the analytics against the committed
+reference fixture (`test/fixtures/report.json`, 54 result keys with nested
+histories and growth maps). `test/report_cli_test.dart` locks the CLI text
+output against `test/fixtures/report_cli.txt`.
 
 ## Structure
 
-- `lib/api/hyperliquid_client.dart` — port of `api.py` (Info API client)
-- `lib/analytics/analytics.dart` — port of `analytics.py` + CLI formatting helpers
+- `lib/api/hyperliquid_client.dart` — Hyperliquid Info API client
+- `lib/analytics/analytics.dart` — analytics + formatting helpers
 - `lib/screens/` — home / loading / report views (fl_chart line charts)
 - `lib/main.dart` — entry point + web URL routing
